@@ -48,23 +48,78 @@ import { AdminLeads } from './pages/admin/AdminLeads.tsx';
 import { AdminAiSettings } from './pages/admin/AdminAiSettings.tsx';
 import { AdminAuditLogs } from './pages/admin/AdminAuditLogs.tsx';
 
+const knownAppRoutes = [
+  '/programs',
+  '/how-it-works',
+  '/for-students',
+  '/for-teachers',
+  '/for-schools',
+  '/resources',
+  '/about',
+  '/contact',
+  '/book-demo',
+  '/login',
+  '/privacy',
+  '/terms',
+  '/verify-certificate',
+  '/student',
+  '/teacher',
+  '/admin',
+];
+
+function getBasePrefix(): string {
+  if (typeof window === 'undefined') return '';
+  const pathname = window.location.pathname || '/';
+  if (knownAppRoutes.some((route) => pathname.startsWith(route)) || pathname === '/' || pathname === '') {
+    return '';
+  }
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments.length > 0) {
+    if (!knownAppRoutes.some((route) => `/${segments[0]}` === route)) {
+      return `/${segments[0]}`;
+    }
+  }
+  return '';
+}
+
+function getNormalizedPath(): string {
+  if (typeof window === 'undefined') return '/';
+  if (window.location.hash && window.location.hash.startsWith('#/')) {
+    return window.location.hash.slice(1);
+  }
+  const pathname = window.location.pathname || '/';
+  const base = getBasePrefix();
+  if (base && pathname.startsWith(base)) {
+    const stripped = pathname.slice(base.length);
+    return stripped === '' ? '/' : (stripped.startsWith('/') ? stripped : `/${stripped}`);
+  }
+  return pathname;
+}
+
 function MainApp() {
   const { user, isLoading } = useAuth();
-  const [currentPath, setCurrentPath] = useState<string>(() => window.location.pathname || '/');
+  const [currentPath, setCurrentPath] = useState<string>(() => getNormalizedPath());
   const [morniMitrOpen, setMorniMitrOpen] = useState(false);
   const [activePortalSection, setActivePortalSection] = useState('dashboard');
 
   useEffect(() => {
     const handlePopState = () => {
-      setCurrentPath(window.location.pathname || '/');
+      setCurrentPath(getNormalizedPath());
     };
     window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handlePopState);
+    };
   }, []);
 
   const navigate = (path: string) => {
-    window.history.pushState({}, '', path);
-    setCurrentPath(path);
+    const base = getBasePrefix();
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    const target = base ? `${base}${cleanPath}` : cleanPath;
+    window.history.pushState({}, '', target);
+    setCurrentPath(cleanPath);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
