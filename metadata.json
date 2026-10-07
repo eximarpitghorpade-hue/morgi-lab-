@@ -1,0 +1,8 @@
+{
+  "name": "Remix Morni Creative Lab",
+  "description": "Production-grade educational website featuring comprehensive LMS, gamification, project submissions, teacher review system, live classes, certificates, and Morni Mitr AI assistant.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
